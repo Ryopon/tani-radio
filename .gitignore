@@ -1,0 +1,25 @@
+# 依存物とビルド成果物
+node_modules/
+dist/
+.wrangler/
+
+# 秘密情報
+.env
+.env.*
+.dev.vars
+*.pem
+
+# 公開リポジトリに入れないもの（tasks/15-repository-and-license.md を参照）
+# 再配布できないフリー素材、NGワードリスト、モデルなど
+local/
+# 生成済みの各回（R2にだけ置く）
+episodes/
+
+# Claude Code のローカル設定
+.claude/settings.local.json
+
+# OS・エディタ
+Thumbs.db
+.DS_Store
+.vscode/
+.idea/
