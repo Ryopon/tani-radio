@@ -1,12 +1,26 @@
+/*
+ * 画面の方針
+ * - 主役は舞台（背景とキャラクター）だけ。背景は画面全体に広がる。
+ * - 操作や文字は、紙のような静かな面にして舞台へ重ねる。
+ * - ページ自体はスクロールしない。長いもの（番組表、台本）は重ねて開く面の中だけがスクロールする。
+ * - 余白は4pxの倍数。色は暖色寄りの無彩色1系統と、アクセント1色。
+ */
+
 :root {
-  --bg: #fbf6ec;
-  --panel: #fffdf8;
-  --ink: #3b2f2f;
-  --ink-soft: #7a6a60;
-  --line: #e6dccb;
-  --accent: #e8825a;
-  --accent-ink: #fff;
-  --mui: #c2577a;
+  --page: #f7f4ee;
+  --card: #fdfbf7;
+  --raised: #efe9df;
+  --paper: rgba(253, 251, 247, 0.95);
+  --text: #1f1b16;
+  --text-2: #5e554a;
+  --text-3: #7b7266;
+  --hair: rgba(31, 27, 22, 0.1);
+  --accent: #c2542d;
+  --on-accent: #fff;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --font: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', 'BIZ UDPGothic', 'Yu Gothic UI', 'Meiryo', system-ui, sans-serif;
+  --mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Consolas, monospace;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
   color-scheme: light;
 }
 
@@ -16,19 +30,27 @@
 
 html,
 body {
+  height: 100%;
   margin: 0;
-  background: var(--bg);
-  color: var(--ink);
-  font-family: 'Hiragino Maru Gothic ProN', 'BIZ UDPGothic', 'Yu Gothic UI', 'Meiryo', system-ui, sans-serif;
-  line-height: 1.6;
+  overflow: hidden;
+  background: var(--page);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 20px;
   -webkit-text-size-adjust: 100%;
 }
 
 button,
-select,
 input {
   font: inherit;
   color: inherit;
+}
+
+p,
+h2,
+h3 {
+  margin: 0;
 }
 
 [hidden] {
@@ -39,46 +61,28 @@ input {
   padding: 24px 16px;
 }
 
-/* ---------- 全体の配置: スマホは縦積み、PCは左に舞台・右に情報欄 ---------- */
+/* ---------- 全体の配置 ---------- */
 
 .app {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  min-height: 100dvh;
-}
-
-.stage-wrap {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  width: min(100vw, 58dvh);
-  aspect-ratio: 1;
-  margin: 0 auto;
+  position: fixed;
+  inset: 0;
   overflow: hidden;
-  background: #d8ecf5;
+  /* 縦長: 上に舞台、その下に字幕とカード、最下部に操作盤 */
+  --top: 48px;
+  --bar: calc(144px + env(safe-area-inset-bottom, 0px));
+  /* 舞台の下に、字幕とカード（本文2行）が切れずに入る 200px を残す */
+  --stage: min(100vw, calc(100dvh - var(--top) - var(--bar) - 200px));
+  --stage-left: calc(50vw - var(--stage) / 2);
+  --stage-top: var(--top);
 }
 
-.panel {
-  padding: 12px 16px 48px;
-  background: var(--panel);
-  min-width: 0;
-}
-
-@media (min-width: 900px) and (orientation: landscape) {
+@media (min-width: 960px) and (min-aspect-ratio: 5/4) {
   .app {
-    grid-template-columns: min(100dvh, 58vw) minmax(0, 1fr);
-    height: 100dvh;
-  }
-  .stage-wrap {
-    position: relative;
-    width: 100%;
-    align-self: center;
-  }
-  .panel {
-    height: 100dvh;
-    overflow-y: auto;
-    padding: 24px 28px 48px;
-    border-left: 1px solid var(--line);
+    /* 横長: 中央に舞台、左に番組表、右にカード、最下部に操作盤 */
+    --side: 304px;
+    --bar: 88px;
+    --stage: min(calc(100dvh - var(--bar)), calc(100vw - var(--side) * 2));
+    --stage-top: calc((100dvh - var(--bar) - var(--stage)) / 2);
   }
 }
 
@@ -86,7 +90,10 @@ input {
 
 .stage {
   position: absolute;
-  inset: 0;
+  left: var(--stage-left);
+  top: var(--stage-top);
+  width: var(--stage);
+  height: var(--stage);
 }
 
 .stage-inner {
@@ -98,13 +105,16 @@ input {
   transform-origin: 0 0;
 }
 
+/* 背景は舞台より広い 2800×2800 で描き、舞台の左上が (900, 400) に来る。はみ出した分が画面の余白を埋める。 */
 .stage-bg {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  left: -900px;
+  top: -400px;
+  width: 2800px;
+  height: 2800px;
+  max-width: none;
   user-select: none;
+  pointer-events: none;
 }
 
 .char {
@@ -133,8 +143,10 @@ input {
   animation: breath 3.6s ease-in-out infinite;
 }
 
-.char-pose {
-  transition: transform 0.22s cubic-bezier(0.3, 1.5, 0.5, 1);
+/* キャラクターの動きだけは、人形らしく少し行き過ぎて戻る。 */
+.char-pose,
+.char-layer {
+  transition: transform 220ms cubic-bezier(0.3, 1.5, 0.5, 1);
 }
 
 .char-layer {
@@ -144,7 +156,6 @@ input {
   height: 100%;
   user-select: none;
   pointer-events: none;
-  transition: transform 0.22s cubic-bezier(0.3, 1.5, 0.5, 1);
 }
 
 @keyframes breath {
@@ -194,26 +205,401 @@ input {
   }
 }
 
+/* ---------- 舞台に重ねる面 ---------- */
+
+.topbar,
+.side,
+.card,
+.subtitle,
+.transport {
+  background: var(--paper);
+}
+
+.wordmark {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+}
+
+.date,
+.program-date,
+.time,
+.row-time {
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-3);
+}
+
+.topbar {
+  position: absolute;
+  left: 16px;
+  top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+}
+
+.side {
+  display: none;
+}
+
 .subtitle {
   position: absolute;
-  left: 3%;
-  right: 3%;
-  bottom: 3%;
-  padding: 8px 12px;
+  left: 16px;
+  right: 16px;
+  top: calc(var(--stage-top) + var(--stage) - 12px);
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  padding: 8px 16px;
   border-radius: 12px;
-  background: rgba(255, 253, 248, 0.92);
-  font-size: clamp(14px, 2.6vmin, 20px);
-  font-weight: 600;
+  box-shadow: var(--shadow);
+  font-size: 15px;
+  line-height: 24px;
+  font-weight: 500;
   text-align: center;
   pointer-events: none;
+  transition: opacity 160ms var(--ease);
 }
 
 .subtitle.empty {
-  visibility: hidden;
+  opacity: 0;
 }
 
 .subtitle.who-mui {
-  color: var(--mui);
+  color: var(--text-2);
+}
+
+.now {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  top: calc(var(--stage-top) + var(--stage) + 56px);
+  bottom: calc(var(--bar) + 8px);
+  overflow: hidden;
+}
+
+.card {
+  padding: 16px;
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  animation: rise 320ms var(--ease) both;
+}
+
+.card-title {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 500;
+}
+
+.card-body {
+  margin-top: 4px;
+  color: var(--text-2);
+  line-height: 24px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+@media (min-height: 720px) {
+  .card-body {
+    -webkit-line-clamp: 4;
+  }
+}
+
+.card-image {
+  display: block;
+  max-width: 100%;
+  margin-top: 12px;
+  border-radius: 8px;
+}
+
+.card-source {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-3);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* ---------- 番組表 ---------- */
+
+.program-title {
+  margin: 0 12px 12px;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 500;
+}
+
+.program-date {
+  margin: 0 12px;
+}
+
+.rows {
+  display: grid;
+  gap: 2px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 8px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 140ms var(--ease);
+}
+
+.row-item {
+  padding-left: 28px;
+  color: var(--text-2);
+}
+
+.row-mark {
+  width: 8px;
+  height: 8px;
+  border-radius: 4px;
+}
+
+.row:hover {
+  background: var(--raised);
+}
+
+.row[aria-current] {
+  background: var(--raised);
+  color: var(--text);
+  font-weight: 500;
+}
+
+.row[aria-current] .row-mark {
+  background: var(--accent);
+}
+
+/* ---------- 操作盤 ---------- */
+
+.transport {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  grid-template:
+    'readout time' 20px
+    'dial dial' 40px
+    'main sub' 44px
+    / 1fr auto;
+  gap: 8px;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--hair);
+}
+
+.readout {
+  grid-area: readout;
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.readout-chapter {
+  flex: none;
+  font-weight: 500;
+}
+
+.readout-item {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-2);
+}
+
+.time {
+  grid-area: time;
+  align-self: center;
+}
+
+/* ラジオのダイヤル。目盛りの上を針が動く。 */
+.dial {
+  grid-area: dial;
+  position: relative;
+  border-radius: 8px;
+  background: var(--raised);
+  overflow: hidden;
+  --p: 0;
+}
+
+.dial-scale {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.tick {
+  stroke: var(--text-3);
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.55;
+}
+
+.tick-chapter {
+  stroke: var(--text);
+  opacity: 0.8;
+}
+
+.dial-played {
+  position: absolute;
+  inset: 0;
+  background: rgba(31, 27, 22, 0.08);
+  transform: scaleX(var(--p));
+  transform-origin: 0 50%;
+}
+
+.dial-needle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--p) * 100% - 1px);
+  width: 2px;
+  background: var(--accent);
+}
+
+.dial-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.dial-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 2px;
+  height: 40px;
+}
+
+.dial-input::-moz-range-thumb {
+  width: 2px;
+  height: 40px;
+  border: 0;
+}
+
+.dial:has(.dial-input:focus-visible) {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+.keys {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.keys-main {
+  grid-area: main;
+}
+
+.keys-sub {
+  grid-area: sub;
+  justify-self: end;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  transition:
+    background-color 140ms var(--ease),
+    color 140ms var(--ease),
+    transform 140ms var(--ease);
+}
+
+.btn:hover {
+  background: var(--raised);
+  color: var(--text);
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.icon {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.btn-num,
+.btn-text {
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 縦長の画面では、幅360pxでも1行に収まる大きさにする。 */
+.btn-skip {
+  padding: 0;
+}
+
+.keys-sub .btn {
+  min-width: 40px;
+  padding: 0 4px;
+}
+
+.btn-play {
+  min-width: 52px;
+  background: var(--text);
+  color: var(--page);
+}
+
+.btn-play:hover {
+  background: #37312a;
+  color: var(--page);
+}
+
+.btn-play .icon {
+  fill: currentColor;
+}
+
+.btn-toggle[aria-pressed='false'] {
+  color: var(--text-3);
+  opacity: 0.55;
 }
 
 /* ---------- 開始画面 ---------- */
@@ -221,286 +607,268 @@ input {
 .start {
   position: absolute;
   inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
+  z-index: 5;
+  display: grid;
+  place-items: center;
   padding: 16px;
-  background: rgba(59, 47, 47, 0.45);
-  color: #fff;
+  background: rgba(31, 27, 22, 0.4);
+}
+
+.start-box {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  width: min(100%, 360px);
+  padding: 24px;
+  border-radius: 20px;
+  background: var(--card);
+  box-shadow: var(--shadow);
   text-align: center;
 }
 
-.start p {
-  margin: 0;
+.start-date {
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-3);
 }
 
 .start-title {
-  font-size: clamp(18px, 4vmin, 28px);
-  font-weight: 700;
-  margin-bottom: 8px !important;
+  margin-bottom: 12px;
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 500;
 }
 
 .start-btn {
-  min-height: 52px;
-  padding: 10px 28px;
+  width: 100%;
+  height: 48px;
+  padding: 0 20px;
   border: 0;
-  border-radius: 999px;
+  border-radius: 12px;
   background: var(--accent);
-  color: var(--accent-ink);
-  font-size: 18px;
-  font-weight: 700;
+  color: var(--on-accent);
+  font-size: 16px;
+  font-weight: 500;
   cursor: pointer;
+  transition:
+    background-color 140ms var(--ease),
+    transform 140ms var(--ease);
+}
+
+.start-btn:hover {
+  background: #ad4926;
+}
+
+.start-btn:active {
+  transform: scale(0.98);
 }
 
 .start-btn-sub {
-  background: #fff;
-  color: var(--ink);
-  font-size: 15px;
-  min-height: 44px;
-}
-
-/* ---------- 情報欄 ---------- */
-
-.head .date {
-  margin: 0;
-  color: var(--ink-soft);
-  font-size: 13px;
-}
-
-.head .title {
-  margin: 0 0 10px;
-  font-size: 20px;
-  line-height: 1.35;
-}
-
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-}
-
-.btn,
-.speed {
-  min-width: 44px;
-  min-height: 44px;
-  padding: 0 12px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #fff;
-  cursor: pointer;
-}
-
-.btn-play {
-  min-width: 56px;
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--accent-ink);
-  font-size: 18px;
-}
-
-.btn-toggle[aria-pressed='false'] {
-  color: var(--ink-soft);
-  text-decoration: line-through;
-}
-
-.time {
-  font-variant-numeric: tabular-nums;
+  height: 44px;
+  background: var(--raised);
+  color: var(--text);
   font-size: 14px;
-  color: var(--ink-soft);
-  margin-right: auto;
 }
 
-.volume {
-  width: 88px;
-  accent-color: var(--accent);
+.start-btn-sub:hover {
+  background: #e6dfd3;
 }
 
-@media (pointer: coarse) {
-  /* スマホは本体の音量ボタンを使う */
-  .volume {
-    display: none;
-  }
-}
+/* ---------- 重ねて開く面（番組表、台本） ---------- */
 
-.seek-wrap {
-  position: relative;
-  margin: 10px 0 14px;
-}
-
-.seek {
-  display: block;
+.sheet {
   width: 100%;
-  height: 28px;
-  margin: 0;
-  accent-color: var(--accent);
-}
-
-.ticks {
-  position: absolute;
-  left: 8px;
-  right: 8px;
-  bottom: -2px;
-  height: 6px;
-  pointer-events: none;
-}
-
-.tick {
-  position: absolute;
-  width: 2px;
-  height: 6px;
-  background: var(--ink-soft);
-  border-radius: 1px;
-}
-
-.card {
-  margin: 0 0 14px;
-  padding: 12px 14px;
-  border: 1px solid var(--line);
-  border-left: 5px solid var(--accent);
-  border-radius: 12px;
-  background: #fff;
-}
-
-.card-title {
-  margin: 0 0 4px;
-  font-size: 16px;
-}
-
-.card-body {
-  margin: 0;
-  font-size: 14px;
-}
-
-.card-image {
-  display: block;
   max-width: 100%;
-  margin-top: 8px;
-  border-radius: 8px;
-}
-
-.card-source {
-  display: inline-block;
-  margin-top: 6px;
-  font-size: 13px;
-  color: var(--ink-soft);
-}
-
-.chapters {
-  display: grid;
-  gap: 4px;
-  margin-bottom: 18px;
-}
-
-.chapter {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  min-height: 44px;
-  padding: 6px 12px;
+  max-height: 76dvh;
+  margin: auto 0 0;
+  padding: 0;
   border: 0;
-  border-radius: 10px;
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
+  border-radius: 20px 20px 0 0;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: var(--shadow);
 }
 
-.chapter.level-0 {
-  font-weight: 700;
+.sheet[open] {
+  display: flex;
+  flex-direction: column;
+  animation: rise 320ms var(--ease) both;
 }
 
-.chapter.level-1 {
-  padding-left: 28px;
-  font-size: 14px;
+.sheet::backdrop {
+  background: rgba(31, 27, 22, 0.35);
 }
 
-.chapter:hover {
-  background: #f6efe2;
-}
-
-.chapter.current {
-  background: #fde9df;
-  color: #a3441f;
-}
-
-.chapter-time {
+.sheet-head {
   flex: none;
-  font-variant-numeric: tabular-nums;
-  font-size: 13px;
-  color: var(--ink-soft);
-}
-
-.transcript {
-  margin-bottom: 18px;
-  border-top: 1px solid var(--line);
-  padding-top: 10px;
-}
-
-.transcript summary {
-  min-height: 44px;
   display: flex;
   align-items: center;
-  cursor: pointer;
-  font-weight: 700;
+  justify-content: space-between;
+  padding: 8px 8px 8px 20px;
+  border-bottom: 1px solid var(--hair);
 }
 
-.transcript h3 {
-  margin: 14px 0 4px;
-  font-size: 14px;
-  color: var(--ink-soft);
+.sheet-title {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 500;
+}
+
+.sheet-body {
+  overflow-y: auto;
+  padding: 12px 8px calc(24px + env(safe-area-inset-bottom, 0px));
+}
+
+.script-chapter {
+  margin: 20px 12px 8px;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+  color: var(--text-3);
+}
+
+.script-chapter:first-child {
+  margin-top: 4px;
 }
 
 .line {
-  display: block;
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 8px;
   width: 100%;
-  padding: 6px 8px;
+  padding: 8px 12px;
   border: 0;
   border-radius: 8px;
   background: transparent;
   text-align: left;
-  font-size: 14px;
+  line-height: 24px;
   cursor: pointer;
+  transition: background-color 140ms var(--ease);
 }
 
 .line:hover {
-  background: #f6efe2;
+  background: var(--raised);
 }
 
-.line.who-mui {
-  color: var(--mui);
+.line-who {
+  font-size: 12px;
+  color: var(--text-3);
 }
 
-.foot {
-  font-size: 13px;
-  color: var(--ink-soft);
+.line.who-mui .line-text {
+  color: var(--text-2);
 }
 
-.foot h2 {
-  margin: 12px 0 4px;
-  font-size: 13px;
-}
-
-.foot ul {
+.plain-list {
   margin: 0;
-  padding-left: 18px;
+  padding: 0 12px;
+  list-style: none;
+  color: var(--text-2);
+  line-height: 24px;
 }
 
-.foot a,
-.card-source {
+a {
   color: inherit;
+  text-underline-offset: 3px;
   overflow-wrap: anywhere;
 }
 
 :focus-visible {
-  outline: 3px solid #2f6fd0;
+  outline: 2px solid var(--text);
   outline-offset: 2px;
 }
 
+/* ---------- 横長の配置 ---------- */
+
+@media (min-width: 960px) and (min-aspect-ratio: 5/4) {
+  .topbar,
+  .btn-program {
+    display: none;
+  }
+
+  .side {
+    position: absolute;
+    left: 24px;
+    top: 24px;
+    display: block;
+    width: 256px;
+    max-height: calc(100dvh - var(--bar) - 48px);
+    padding: 16px 8px 8px;
+    overflow-y: auto;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+  }
+
+  .side .wordmark {
+    margin: 0 12px 16px;
+  }
+
+  .row {
+    min-height: 36px;
+  }
+
+  .now {
+    left: auto;
+    right: 24px;
+    top: 24px;
+    bottom: auto;
+    width: 256px;
+    max-height: calc(100dvh - var(--bar) - 48px);
+  }
+
+  .card {
+    padding: 20px;
+  }
+
+  .card-body {
+    -webkit-line-clamp: 12;
+  }
+
+  .subtitle {
+    top: auto;
+    bottom: calc(var(--bar) + 16px);
+    left: calc(50vw - min(var(--stage) - 48px, 640px) / 2);
+    right: auto;
+    width: min(var(--stage) - 48px, 640px);
+    font-size: 16px;
+  }
+
+  .transport {
+    grid-template:
+      'main readout time sub' 20px
+      'main dial dial sub' 36px
+      / auto 1fr auto auto;
+    gap: 4px 24px;
+    height: var(--bar);
+    padding: 12px 24px;
+  }
+
+  .keys {
+    align-self: center;
+  }
+
+  .btn {
+    min-width: 40px;
+    height: 40px;
+  }
+
+  .btn-play {
+    min-width: 48px;
+  }
+
+  .sheet {
+    width: 560px;
+    max-height: 80dvh;
+    margin: auto;
+    border-radius: 20px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .char-breath {
+  .char-breath,
+  .card,
+  .sheet[open] {
     animation: none;
   }
   .char-pose,

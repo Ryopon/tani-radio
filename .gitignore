@@ -26,3 +26,6 @@ Thumbs.db
 .DS_Store
 .vscode/
 .idea/
+
+# 外部から導入したスキル（各スキルのライセンスに従う。リポジトリには入れない）
+.claude/skills/

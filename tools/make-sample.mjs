@@ -117,17 +117,24 @@ writeCharacter('mui', {
   },
 });
 
+// 背景は舞台（1000×1000）より広い 2800×2800 で描く。舞台の左上が (900, 400) に来る。
+// はみ出した部分が、横長の画面では左右、縦長の画面では上下の余白を埋める。
+// 21:9 の横長モニターや 9:22 の縦長スマホでも余白が出ない広さにしてある。
+const cloud = (x, y, s) =>
+  `<g fill="#fff" opacity="0.85"><ellipse cx="${x}" cy="${y}" rx="${90 * s}" ry="${34 * s}"/><ellipse cx="${x - 50 * s}" cy="${y + 14 * s}" rx="${60 * s}" ry="${26 * s}"/><ellipse cx="${x + 56 * s}" cy="${y + 12 * s}" rx="${66 * s}" ry="${28 * s}"/></g>`;
 write(
   'img/bg.svg',
   svg(
-    1000,
-    1000,
-    `<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfe3f5"/><stop offset="1" stop-color="#fdf3dc"/></linearGradient></defs>
-<rect width="1000" height="1000" fill="url(#sky)"/>
-<circle cx="820" cy="170" r="70" fill="#fff3b0"/>
-<path d="M0 640 Q250 480 520 620 T1000 560 V1000 H0Z" fill="#a9d6a0"/>
-<path d="M0 760 Q300 660 620 760 T1000 720 V1000 H0Z" fill="#8cc68a"/>
-<rect x="0" y="900" width="1000" height="100" fill="#c9a27a"/>`,
+    2800,
+    2800,
+    `<defs><linearGradient id="sky" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="1300"><stop offset="0" stop-color="#a9d8f0"/><stop offset="1" stop-color="#fdf3dc"/></linearGradient></defs>
+<rect width="2800" height="2800" fill="url(#sky)"/>
+<circle cx="1720" cy="570" r="70" fill="#fff3b0"/>
+${cloud(760, 660, 1)}${cloud(2060, 780, 0.8)}${cloud(1200, 200, 1.1)}${cloud(2400, 420, 0.9)}${cloud(260, 380, 0.9)}
+<path d="M0 1010 Q350 900 700 1010 T1420 1020 T2140 960 T2800 1000 V2800 H0Z" fill="#a9d6a0"/>
+<path d="M0 1160 Q400 1070 800 1160 T1520 1160 T2240 1120 T2800 1150 V2800 H0Z" fill="#8cc68a"/>
+<rect x="0" y="1300" width="2800" height="1500" fill="#c9a27a"/>
+<rect x="0" y="1300" width="2800" height="12" fill="#b58d64"/>`,
   ),
 );
 
