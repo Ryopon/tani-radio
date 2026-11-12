@@ -13,14 +13,14 @@
 | 05 | [キャラクター素材の制作](05-character-assets.md) | 制作 | 未着手 |
 | 06 | [台本用のキャラクター定義](06-character-definitions.md) | 設計 | 未着手 |
 | 07 | [技術選定](07-tech-selection.md) | 設計 | 完了 |
-| 08 | [エピソード形式と再生エンジン](08-episode-engine.md) | 設計 | 未着手 |
+| 08 | [エピソード形式と再生エンジン](08-episode-engine.md) | 設計 | 進行中 |
 | 09 | [生成・配信パイプライン](09-generation-pipeline.md) | 設計 | 未着手 |
 | 10 | [ニュースの情報源と画像利用ルール](10-news-sources-and-images.md) | 設計 | 未着手 |
 | 11 | [おたより機能](11-otayori.md) | 設計 | 未着手 |
 | 12 | [雑学コーナー](12-trivia-corner.md) | 設計 | 未着手 |
 | 13 | [免責事項・AI生成の明記・クレジット](13-legal-notices.md) | 文書 | 未着手 |
 | 14 | [日替わりの背景と小物](14-backgrounds-and-props.md) | 設計 | 未着手 |
-| 15 | [公開リポジトリとライセンス](15-repository-and-license.md) | 決定 | 進行中 |
+| 15 | [公開リポジトリとライセンス](15-repository-and-license.md) | 決定 | 完了 |
 | 16 | [Cloudflareアカウントとドメインの設定](16-cloudflare-and-domain.md) | 準備 | 未着手 |
 
 ## 進める順番の目安

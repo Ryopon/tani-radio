@@ -8,6 +8,20 @@
 
 番組の内容はAIが自動生成します。
 
+## 開発
+
+Node.js が必要です。
+
+```bash
+npm install
+```
+
+```bash
+npm run dev
+```
+
+`npm run dev` は、仮の素材と音声でサンプル回を `public/_sample/` に生成してから開発サーバーを起動します。設計は [docs/engine-design.md](docs/engine-design.md) にあります。
+
 ## ライセンス
 
 | 対象 | ライセンス |

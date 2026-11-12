@@ -1,0 +1,17 @@
+{
+  "name": "tani-radio",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "sample": "node tools/make-sample.mjs",
+    "dev": "node tools/make-sample.mjs && vite",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit && vite build"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8"
+  }
+}

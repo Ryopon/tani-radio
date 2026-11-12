@@ -3,6 +3,9 @@ node_modules/
 dist/
 .wrangler/
 
+# 開発用サンプル回（npm run sample で生成）
+public/_sample/
+
 # 秘密情報
 .env
 .env.*

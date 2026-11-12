@@ -1,6 +1,6 @@
 # 15 公開リポジトリとライセンス
 
-状態: 進行中（方針は承認済み。ローカルの準備まで完了、コミットとGitHub公開が残り）
+状態: 完了
 
 ## 決まっていること
 
@@ -44,8 +44,8 @@
 - [x] LICENSE（MIT）と、キャラクター素材の権利表記ファイル（assets/characters/LICENSE.md）を作る
 - [x] READMEにライセンスの区分を書く
 - [x] コミット用メールアドレスをGitHubのnoreplyアドレスにする（このリポジトリのローカル設定のみ。GitHubアカウントは Ryopon）
-- [ ] 最初のコミットを作る
-- [ ] GitHubに公開リポジトリを作ってpushする（GitHub CLIは未インストール。ブラウザで作るか、CLIを入れる）
+- [x] 最初のコミットを作る
+- [x] GitHubに公開リポジトリを作ってpushする（https://github.com/Ryopon/tani-radio ）
 
 ## 置き場所の決まり
 
